@@ -1,21 +1,23 @@
 const express = require('express');
 const admin = require('firebase-admin');
+const { signupSchema } = require('../validators/user.validators');
 const db = admin.firestore();
 const logger = require('../config/logger');
-
 const router = express.Router();
 
 router.post('/signup', async (req, res) => {
-  const { email, password } = req.body;
+  const { error, value } = signupSchema.validate(req.body);
 
-  if (!email || !password) {
-    const errorMessage = 'Email and password are required';
+  if (error) {
+    const errorMessage = error.details.map(detail => detail.message).join(', ');
     logger.error(errorMessage);
     return res.status(400).json({
       status: 'error',
       message: errorMessage,
     });
   }
+
+  const { email, password } = value;
 
   try {
     const userRecord = await admin.auth().createUser({
@@ -38,7 +40,7 @@ router.post('/signup', async (req, res) => {
       message: 'User created successfully',
       data: userRecord,
     });
-  } catch (error) { // Basic error handling
+  } catch (error) { //Basic error handling
     let errorMessage = 'Error creating user';
     if (error.code === 'auth/email-already-exists') {
       errorMessage = 'The email address is already in use by another account.';

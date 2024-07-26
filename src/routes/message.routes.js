@@ -1,10 +1,22 @@
 const express = require('express');
 const admin = require('firebase-admin');
+const {messageSchema} = require('../validators/message.validators');
 const db = admin.firestore();
 const logger = require('../config/logger');
 const router = express.Router();
 
 router.post('/message', async (req, res) => {
+  const { error, value } = messageSchema.validate(req.body);
+
+  if (error) {
+    const errorMessage = error.details.map(detail => detail.message).join(', ');
+    logger.error(errorMessage);
+    return res.status(400).json({
+      status: 'error',
+      message: errorMessage,
+    });
+  }
+
   const { 
     senderUid, 
     receiverUid, 
@@ -13,23 +25,10 @@ router.post('/message', async (req, res) => {
     from_name, 
     to_avatar, 
     to_name 
-  } = req.body;
+  } = value;
 
- // Check if all the required fields are present as i have not added any validations yet
-
-  if (!senderUid || !receiverUid || !messageText || !from_avatar || !from_name || !to_avatar || !to_name) {
-    const errorMessage = 'senderUid, receiverUid, messageText, from_avatar, from_name, to_avatar, and to_name are required';
-    logger.error(errorMessage);
-    return res.status(400).json({
-      status: 'error',
-      message: errorMessage,
-    });
-  }
- // Document name is the conversation id ( in the messages collection )
   try {
     const conversationId = [senderUid, receiverUid].sort().join('_');
-
-    // messageData is stored in the messageList sub collection
 
     const messageData = {
       addTime: new Date().toISOString(),
@@ -61,8 +60,6 @@ router.post('/message', async (req, res) => {
         users: [senderUid, receiverUid],
       });
     }
-
- // Sub collection messageList is used to store the messages
 
     const messageListRef = conversationRef.collection('messageList').doc();
     await messageListRef.set(messageData);
