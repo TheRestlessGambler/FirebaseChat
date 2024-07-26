@@ -1,11 +1,12 @@
 const express = require('express');
 const admin = require('firebase-admin');
-const {messageSchema} = require('../validators/message.validators');
+const { messageSchema } = require('../validators/message.validators');
 const db = admin.firestore();
 const logger = require('../config/logger');
+const authenticate = require('../middlewares/authenticator');
 const router = express.Router();
 
-router.post('/message', async (req, res) => {
+router.post('/message', authenticate, async (req, res) => {
   const { error, value } = messageSchema.validate(req.body);
 
   if (error) {
@@ -17,14 +18,14 @@ router.post('/message', async (req, res) => {
     });
   }
 
-  const { 
-    senderUid, 
-    receiverUid, 
-    messageText, 
-    from_avatar, 
-    from_name, 
-    to_avatar, 
-    to_name 
+  const {
+    senderUid,
+    receiverUid,
+    messageText,
+    from_avatar,
+    from_name,
+    to_avatar,
+    to_name,
   } = value;
 
   try {
