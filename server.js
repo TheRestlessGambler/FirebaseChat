@@ -14,13 +14,18 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
-// Import the routes
-const authRoutes = require('./src/routes/auth.routes');
-const messageRoutes = require('./src/routes/message.routes');
 
-// Use the routes
-app.use('/api', authRoutes);
+const authRoutes = require('./src/routes/auth.routes');
+const fetchChatsRoutes = require('./src/routes/fetchChats.routes');
+const messageRoutes = require('./src/routes/message.routes');
+const conversationRoutes = require('./src/routes/conversation.routes');
+
+
+app.use('/api/auth', authRoutes);
+app.use('/api/chats', fetchChatsRoutes);
 app.use('/api', messageRoutes);
+app.use('/api', conversationRoutes);
+
 
 const port = process.env.PORT || 3000;
 
